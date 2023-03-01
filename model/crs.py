@@ -14,22 +14,20 @@ from functools import reduce
 class LitRecBartModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        self.tokenizer = BartTokenizer.from_pretrained('facebook/bart-base')
-        self.p_encoder = BartModel.from_pretrained('facebook/bart-base')
-        self.q_encoder = self.p_encoder
+        self.tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
+        self.p_encoder = DistilBertModel.from_pretrained('distilbert-base-uncased')
+        self.q_encoder = DistilBertModel.from_pretrained('distilbert-base-uncased')
         self.pretrained_movie_embedding = nn.Embedding(2000, 768)
         self.p_fc = MyTransformer()
-        self.q_fc = self.p_fc
+        self.q_fc = MyTransformer()
+        self.lr = .1e-3
         
-        for param in self.p_encoder.parameters():
-            param.requires_grad = False
-
-
-        # for param in self.q_encoder.parameters():
+        # for param in self.p_encoder.parameters():
         #     param.requires_grad = False
-
-        # for param in self.q_encoder.encoder.layer[-3:].parameters():
-        #     param.requires_grad = True
+        for param in self.p_encoder.transformer.layer[:-1].parameters():
+            param.requires_grad = False
+        for param in self.q_encoder.transformer.layer[:-1].parameters():
+            param.requires_grad = False
 
     def p_forward(self, batch):
         """
@@ -39,12 +37,11 @@ class LitRecBartModel(pl.LightningModule):
         Returns:
             movie plot embeddings
         """
-        self.p_encoder = self.p_encoder
-        self.p_fc = self.p_fc
         batch = {key: tensor.cuda() for key, tensor in batch.items()}
-        output = self.p_encoder(**batch).last_hidden_state
-        ret = self.p_fc(output)
-        return ret
+        output = self.p_encoder(**batch).last_hidden_state.mean(dim=1)
+
+        # output = self.p_fc(output)
+        return output
 
     def q_forward(self, batch):
         """
@@ -54,12 +51,11 @@ class LitRecBartModel(pl.LightningModule):
         Returns:
             question embeddings
         """
-        self.q_encoder = self.q_encoder
-        self.q_fc = self.q_fc
         batch = {key: tensor.cuda() for key, tensor in batch.items()}
-        output = self.q_encoder(**batch).last_hidden_state
-        ret = self.q_fc(output)
-        return ret
+        output = self.q_encoder(**batch).last_hidden_state.mean(dim=1)
+
+        # output = self.q_fc(output)
+        return output
 
     def training_step(self, batch):
         pos_neg_plots, q = batch
@@ -81,7 +77,8 @@ class LitRecBartModel(pl.LightningModule):
         pos_scores = F.cosine_similarity(pos_embs, q_embs)
         neg_scores = F.cosine_similarity(neg_embs, q_embs)
 
-        loss = -nn.functional.logsigmoid(pos_scores-neg_scores).sum()
+        # loss = -nn.functional.logsigmoid(pos_scores-neg_scores).sum()
+        loss = (1 - pos_scores + neg_scores).clamp(min=0).sum()
         self.log("train_loss", loss)
         return loss
 
@@ -138,7 +135,7 @@ class LitRecBartModel(pl.LightningModule):
         return idxs
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
 
 
@@ -219,8 +216,11 @@ class LitRecBertModel(pl.LightningModule):
         #     1), q_embs.unsqueeze(2)).squeeze()
         pos_scores = F.cosine_similarity(pos_embs, q_embs)
         neg_scores = F.cosine_similarity(neg_embs, q_embs)
+        
+        loss_fn = ContrastiveLoss()
+        loss = loss_fn(pos_scores,neg_scores)
 
-        loss = -nn.functional.logsigmoid(pos_scores-neg_scores).sum()
+        # loss = -nn.functional.logsigmoid(pos_scores-neg_scores).sum()
         self.log("train_loss", loss)
         return loss
 
@@ -291,12 +291,33 @@ class MyTransformer(nn.Module):
             nn.TransformerEncoderLayer(d_model=768, nhead=12),
             num_layers=4
         )
-        self.pooler = nn.Linear(512, 1)
+        self.fc1 = nn.Linear(768,512)
+        nn.init.xavier_uniform_(self.fc1.weight)
+        self.fc2 = nn.Linear(512,512)
+        nn.init.xavier_uniform_(self.fc2.weight)
+        self.seq = nn.Sequential(
+            self.fc1,
+            nn.ReLU(),
+            self.fc2
+        )
+    
+    def print_grad(self,grad):
+        print(grad.mean())
 
     def forward(self, x):
-        # Apply transformer
-        x = self.transformer(x)
-        x = x.permute(0, 2, 1)
-        # Apply pooling to obtain output tensor of shape (batch_size, hidden_size)
-        x = self.pooler(x).squeeze(2)
+        # x = self.transformer(x)
+        # x = x.permute(0, 2, 1)
+        x = self.seq(x)
+        x = x.mean(dim=1)
         return x
+
+class ContrastiveLoss(nn.Module):
+    def __init__(self, margin=1.0):
+        super(ContrastiveLoss, self).__init__()
+        self.margin = margin
+
+    def forward(self, output1, output2, target):
+        euclidean_distance = F.pairwise_distance(output1, output2)
+        loss_contrastive = torch.mean((1-target) * torch.pow(euclidean_distance, 2) +
+                                      (target) * torch.pow(torch.clamp(self.margin - euclidean_distance, min=0.0), 2))
+        return loss_contrastive
