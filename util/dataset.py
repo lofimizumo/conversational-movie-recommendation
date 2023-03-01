@@ -53,25 +53,25 @@ class MoviePlotDataset(Dataset):
         pos_plot = self.data[idx]
         neg_plot = select_random_items(self.data, idx, n=1)
         question = self.label[idx]
-        pos_plot = self.tokenizer(pos_plot, max_length=512,
-                                  padding='max_length', return_tensors='pt')
-        neg_plot = self.tokenizer(neg_plot, max_length=512,
-                                  padding='max_length', return_tensors='pt')
-        question = self.tokenizer(
-            question, max_length=512, padding='max_length', return_tensors='pt')
-        p = pos_plot['input_ids'].squeeze(0)
-        neg_p = neg_plot['input_ids'].squeeze(0)
+        # pos_plot = self.tokenizer(pos_plot, max_length=512,
+        #                           padding='max_length', return_tensors='pt')
+        # neg_plot = self.tokenizer(neg_plot, max_length=512,
+        #                           padding='max_length', return_tensors='pt')
+        # question = self.tokenizer(
+        #     question, max_length=512, padding='max_length', return_tensors='pt')
+        # p = pos_plot['input_ids'].squeeze(0)
+        # neg_p = neg_plot['input_ids'].squeeze(0)
 
-        q = question['input_ids'].squeeze(0)
-        return [p, neg_p], q
+        # q = question['input_ids'].squeeze(0)
+        return [pos_plot, neg_plot[0]], question
 
 
 class MoviePlotDatasetSmall(Dataset):
     def __init__(self, data_col_name, label_col_name):
         filename = os.path.join('data', 'movie_1000_clean.csv')
         self.df = pd.read_csv(filename, sep='@')
-        self.data = self.df[data_col_name][:1]
-        self.label = self.df[label_col_name][:1]
+        self.data = self.df[data_col_name][:2]
+        self.label = self.df[label_col_name][:2]
         self.tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
 
     def __len__(self):

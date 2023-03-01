@@ -10,8 +10,6 @@ model = LitRecModel.load_from_checkpoint("lightning_logs/version_0/checkpoints/e
 
 model.eval()
 
-model.pretrain_movie_embs('data/movie_1000_clean.csv')
-
 movie_dict=read_plots_from_csv('data/movie_1000_clean.csv')
 names=movie_dict.keys()
 idx=list(range(len(names)))
@@ -46,5 +44,23 @@ with torch.no_grad():
 print(encoded_input)
 
 #%%
+questions=['can you recommend a movie about dinosaur',
 
-tokens.shape
+'can you recommend a movie about alien fighting human',
+
+'can you recommend a movie about love story',
+
+'can you recommend a movie about ghost and spirit',
+
+'can you recommend a movie about animals',
+
+'can you recommend a movie about war between countries',
+
+'can you recommend a movie about kids and families',
+
+'can you recommend a movie about kids tring to save the alien',
+
+'can you recommend a movie about animals fighting each other for power',
+
+'can you recommend a movie about a thrill adventure']
+questions
