@@ -1,4 +1,4 @@
-from model.crs import LitRecModel
+from model.recModel import LitRecModel
 import pandas as pd
 from util.dataset import *
 from collections import OrderedDict

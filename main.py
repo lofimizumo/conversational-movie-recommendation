@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 import torch
 from torch.utils.data import DataLoader
-from model.crs import LitRecBartModel, LitRecBertModel
+from model.recModel import LitRecBartModel, LitRecBertModel
 from util.dataset import MoviePlotDataset, MoviePlotDatasetSmall
 from collections import OrderedDict
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping

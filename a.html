@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AI Chatbot</title>
+  </head>
+  <body>
+    <h1>AI Chatbot</h1>
+    <form>
+      <label for="user_input">Ask me a question:</label><br>
+      <input type="text" id="user_input" name="user_input"><br><br>
+      <input type="button" value="Submit" onclick="ask_question()">
+    </form>
+    <br>
+    <div id="output"></div>
+    <script>
+      function ask_question() {
+        var input = document.getElementById("user_input").value;
+        // send input to backend to process and get output
+        fetch("/process_question?question=" + input)
+          .then(response => response.text())
+          .then(data => document.getElementById("output").innerHTML = data);
+      }
+    </script>
+  </body>
+</html>
