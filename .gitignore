@@ -3,6 +3,5 @@
 /lightning_logs
 /test.ipynb
 /*.zip
-redial_dataset/
 data/
 .DS_Store
