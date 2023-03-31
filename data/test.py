@@ -1,9 +1,10 @@
-def process_txt(input_file, output_file):
-    with open(input_file, 'r') as infile, open(output_file, 'w') as outfile:
-        for line in infile:
-            modified_line = line.replace("Question:", "@Question:").replace("Response:", "@").replace("Label:","@")
-            outfile.write(modified_line)
+from datasets import load_dataset 
 
-# Example usage:
+# Load the full dataset
+full_dataset = load_dataset('csv', data_files='data/prompt_answer_150.csv', delimiter='@', column_names=[
+                            "movie_name", "question", "answer"], cache_dir="./cache",split='train')
 
-process_txt("data/prompt_answer_150.csv", "data/prompt_answer_150_II.csv")
+# Split the dataset into train and validation sets
+full_dataset = full_dataset.train_test_split(test_size=0.2, shuffle=True)
+full_dataset
+

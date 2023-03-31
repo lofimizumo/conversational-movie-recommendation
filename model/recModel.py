@@ -37,7 +37,7 @@ class LitRecBartModel(pl.LightningModule):
         Returns:
             movie plot embeddings
         """
-        batch = {key: tensor.cuda() for key, tensor in batch.items()}
+        # batch = {key: tensor.cuda() for key, tensor in batch.items()}
         output = self.p_encoder(**batch).last_hidden_state.mean(dim=1)
 
         # output = self.p_fc(output)
@@ -51,7 +51,7 @@ class LitRecBartModel(pl.LightningModule):
         Returns:
             question embeddings
         """
-        batch = {key: tensor.cuda() for key, tensor in batch.items()}
+        # batch = {key: tensor.cuda() for key, tensor in batch.items()}
         output = self.q_encoder(**batch).last_hidden_state.mean(dim=1)
 
         # output = self.q_fc(output)
@@ -177,7 +177,7 @@ class LitRecBertModel(pl.LightningModule):
         """
         self.p_encoder = self.p_encoder
         self.p_fc = self.p_fc
-        batch = {key: tensor.cuda() for key, tensor in batch.items()}
+        # batch = {key: tensor.cuda() for key, tensor in batch.items()}
         bert_output = self.p_encoder(**batch).last_hidden_state
         ret = self.p_fc(bert_output)
         return ret
@@ -192,7 +192,7 @@ class LitRecBertModel(pl.LightningModule):
         """
         self.q_encoder = self.q_encoder
         self.q_fc = self.q_fc
-        batch = {key: tensor.cuda() for key, tensor in batch.items()}
+        # batch = {key: tensor.cuda() for key, tensor in batch.items()}
         bert_output = self.q_encoder(**batch).last_hidden_state
         ret = self.q_fc(bert_output)
         return ret
