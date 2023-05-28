@@ -9,3 +9,4 @@ cache/
 *.ckpt
 *.pyc
 *.jsonl
+data/website
