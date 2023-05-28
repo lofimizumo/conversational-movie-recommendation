@@ -35,7 +35,7 @@ def generate_response(model, tokenizer, input_question, max_length=50):
 
 @app.before_first_request
 def load_model():
-
+    # Load the checkpoint and create a model instance
     # Load the checkpoint and create a model instance
     checkpoint_path = "responseModel.ckpt"
     model_name = "google/flan-t5-small"
